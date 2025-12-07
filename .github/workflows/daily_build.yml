@@ -1,0 +1,35 @@
+name: Daily AGH Blocklist Build
+
+on:
+  schedule:
+    - cron: '0 20 * * *'  # 每天 UTC 时间 20:00 运行 (相当于北京时间凌晨 4 点)
+  workflow_dispatch:      # 允许手动触发运行
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        # 需要安装 requests 库来抓取远程数据
+        run: pip install requests
+
+      - name: Run build script 🚀
+        run: python build_agh_list.py
+
+      - name: Commit and Push changes
+        # 自动将生成的文件提交回仓库
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Auto-update AdGuard Home blocklist"
+          file_pattern: "adguardhome_blocklist.txt"
