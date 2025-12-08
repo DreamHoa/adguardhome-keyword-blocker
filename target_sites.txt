@@ -1,3 +1,5 @@
 facebook
 messenger
 instagram
+youtube
+spotify
