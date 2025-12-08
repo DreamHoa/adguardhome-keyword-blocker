@@ -29,7 +29,7 @@ jobs:
         run: pip install requests
           
       - name: Run generator
-        run: python generate.py
+        run: python build_agh_list.py
           
       - name: Commit and Push
         run: |
