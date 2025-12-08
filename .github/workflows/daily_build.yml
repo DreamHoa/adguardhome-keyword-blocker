@@ -1,35 +1,40 @@
-name: Daily AGH Blocklist Build
+name: Update Blocklist
 
 on:
   schedule:
-    - cron: '0 20 * * *'  # 每天 UTC 时间 20:00 运行 (相当于北京时间凌晨 4 点)
-  workflow_dispatch:      # 允许手动触发运行
-
-permissions:
-  contents: write
+    # 每天 UTC 02:00 (菲律宾/北京时间 10:00) 运行
+    - cron: '0 0 * * *'
+  # 允许当你修改了 targets.txt 后自动触发更新
+  push:
+    paths:
+      - 'targets.txt'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 必须给写权限才能提交代码
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-
+          
       - name: Install dependencies
-        # 需要安装 requests 库来抓取远程数据
         run: pip install requests
-
-      - name: Run build script 🚀
-        run: python build_agh_list.py
-
-      - name: Commit and Push changes
-        # 自动将生成的文件提交回仓库
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Auto-update AdGuard Home blocklist"
-          file_pattern: "adguardhome_blocklist.txt"
+          
+      - name: Run generator
+        run: python generate.py
+          
+      - name: Commit and Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add blocklist.txt
+          # 如果文件没变化，就不提交，避免产生空的 commit
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update blocklist" && git push)
