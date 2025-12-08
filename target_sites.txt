@@ -4,4 +4,3 @@ instagram
 youtube
 spotify
 twitter
-xai
