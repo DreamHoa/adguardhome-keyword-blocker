@@ -80,7 +80,7 @@ def main():
     sorted_rules = sorted(list(all_rules))
     
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        f.write(f"! Title: Custom Social Blocklist\n")
+        f.write(f"! Title: Custom Blocklist\n")
         f.write(f"! Description: Strict mode (No includes). Keywords: {', '.join(targets)}\n")
         f.write(f"! Count: {len(sorted_rules)}\n")
         f.write(f"! Updated: {os.popen('date -u').read().strip()}\n")
