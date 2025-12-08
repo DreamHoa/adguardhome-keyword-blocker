@@ -7,7 +7,7 @@ on:
   # 允许当你修改了 targets.txt 后自动触发更新
   push:
     paths:
-      - 'targets.txt'
+      - 'targets_sites.txt'
   workflow_dispatch:
 
 jobs:
