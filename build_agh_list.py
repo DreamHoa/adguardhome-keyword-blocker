@@ -1,95 +1,96 @@
 import requests
-from datetime import datetime
-import re
 import os
 
-# ================= 配置区域 =================
-TARGET_FILE = "target_sites.txt"
-OUTPUT_AGH_LIST = "adguardhome_blocklist.txt"
-# ===========================================
-
+# ================= 配置 =================
+# 你的关键词文件
+INPUT_FILE = "target_sites.txt"
+# 输出给 AdGuard Home 的文件
+OUTPUT_FILE = "adguardhome_blocklist.txt"
+# 上游数据源 (v2fly 社区版)
 BASE_URL = "https://raw.githubusercontent.com/v2fly/domain-list-community/master/data/"
 
-def fetch_and_parse_site(site_name):
-    """
-    下载并解析指定站点的域名列表，严格跳过 'include:' 关联指令。
-    """
-    print(f"Fetching domains strictly for: {site_name}...")
+def get_targets():
+    """读取 targets.txt 中的关键词"""
+    if not os.path.exists(INPUT_FILE):
+        print(f"错误: 找不到 {INPUT_FILE}")
+        return []
+    with open(INPUT_FILE, 'r', encoding='utf-8') as f:
+        # 过滤空行和注释
+        return [line.strip() for line in f if line.strip() and not line.startswith('#')]
+
+def fetch_and_parse(keyword):
+    """下载并严格解析规则（丢弃关联域名）"""
+    url = BASE_URL + keyword
+    print(f"正在抓取: {keyword} ...")
     
     try:
-        url = BASE_URL + site_name
-        resp = requests.get(url, timeout=10)
-        
-        if resp.status_code != 200:
-            print(f"⚠️ Warning: Site data for {site_name} not found or inaccessible.")
+        response = requests.get(url, timeout=10)
+        if response.status_code != 200:
+            print(f"  -> 失败: 远程仓库没有找到关键词 '{keyword}' (404)")
             return []
             
-        lines = resp.text.split('\n')
-        domains = []
+        lines = response.text.splitlines()
+        valid_rules = []
         
         for line in lines:
-            line = line.strip()
-            # 忽略注释、空行和 'include:' 关联指令 (严格执行用户不关联的要求)
-            if not line or line.startswith('#') or line.startswith('include:'):
+            # 1. 清理空格和行内注释
+            line = line.split('#')[0].strip()
+            if not line:
                 continue
                 
-            # 提取纯域名 (处理 'full:', 'domain:', 'keyword:' 等前缀)
-            clean_domain = line
-            if ':' in line:
-                parts = line.split(':')
-                # 只处理常用的 domain/full/keyword 类型
-                if parts[0] in ['domain', 'full', 'keyword']:
-                    clean_domain = parts[1]
-                else:
-                    continue # 跳过复杂的正则
-            
-            # 移除可能存在的 @Attributes 和 IP 地址
-            if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', clean_domain):
+            # 2. 【核心修改】严格过滤：丢弃所有 include 引用
+            # 如果这行是 include:xxx，说明它是关联域名，按照你的要求：不要！
+            if line.startswith("include:"):
                 continue
-            if '@' in clean_domain:
-                clean_domain = clean_domain.split('@')[0]
             
-            # 最终检查，确保是有效的域名
-            if clean_domain:
-                domains.append(clean_domain)
-            
-        return domains
+            # 3. 丢弃正则和属性行 (AdGuard Home 基础模式通常不需要)
+            if line.startswith("regexp:") or line.startswith("keyword:") or line.startswith("@"):
+                continue
+
+            # 4. 格式转换
+            if line.startswith("full:"):
+                # 精确匹配 -> |domain.com^
+                domain = line.replace("full:", "")
+                valid_rules.append(f"|{domain}^")
+            else:
+                # 泛域名匹配 -> ||domain.com^
+                valid_rules.append(f"||{line}^")
+                
+        return valid_rules
+
     except Exception as e:
-        print(f"Error fetching site {site_name}: {e}")
+        print(f"  -> 错误: {e}")
         return []
 
 def main():
-    if not os.path.exists(TARGET_FILE):
-        print(f"Error: Target file {TARGET_FILE} not found.")
+    targets = get_targets()
+    if not targets:
+        print("没有指定任何 Target，脚本结束。")
         return
 
-    # 1. 读取用户指定的关键词列表
-    with open(TARGET_FILE, 'r') as f:
-        target_sites = [line.strip().lower() for line in f if line.strip() and not line.startswith('#')]
-
-    if not target_sites:
-        print("No target sites specified. Exiting.")
-        return
-        
-    final_domains = set()
-    for site in target_sites:
-        domains = fetch_and_parse_site(site)
-        final_domains.update(domains)
+    all_rules = set()
     
-    # 2. 生成 AdGuard Home 兼容列表 (纯域名，一行一个)
-    agh_lines = [
-        f"# AdGuard Home Blocklist for: {', '.join(target_sites)}",
-        "# Source: v2fly/domain-list-community (Strict Keyword Matching)",
-        f"# Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-    ]
+    for keyword in targets:
+        rules = fetch_and_parse(keyword)
+        if rules:
+            print(f"  -> 获取到 {len(rules)} 条规则")
+            all_rules.update(rules)
     
-    for domain in sorted(final_domains):
-        agh_lines.append(domain)
+    # 排序并写入
+    sorted_rules = sorted(list(all_rules))
     
-    with open(OUTPUT_AGH_LIST, 'w', encoding='utf-8') as f:
-        f.write("\n".join(agh_lines))
-    print(f"✅ Successfully generated {OUTPUT_AGH_LIST} with {len(final_domains)} domains.")
+    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
+        f.write(f"! Title: Custom Social Blocklist\n")
+        f.write(f"! Description: Strict mode (No includes). Keywords: {', '.join(targets)}\n")
+        f.write(f"! Count: {len(sorted_rules)}\n")
+        f.write(f"! Updated: {os.popen('date -u').read().strip()}\n")
+        f.write("\n")
+        for rule in sorted_rules:
+            f.write(rule + "\n")
+            
+    print(f"\n========================================")
+    print(f"处理完成！共生成 {len(sorted_rules)} 条规则。")
+    print(f"已保存到: {OUTPUT_FILE}")
 
 if __name__ == "__main__":
-    # 需要 requests 库
     main()
