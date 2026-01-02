@@ -1,7 +1,7 @@
 ! Title: Custom Blocklist
 ! Description: Strict mode (No includes). Keywords: facebook, messenger, instagram, youtube, spotify, twitter
 ! Count: 694
-! Updated: Thu Jan  1 01:00:20 UTC 2026
+! Updated: Fri Jan  2 00:55:04 UTC 2026
 
 |audio-ak-spotify-com.akamaized.net^
 |audio4-ak-spotify-com.akamaized.net^
