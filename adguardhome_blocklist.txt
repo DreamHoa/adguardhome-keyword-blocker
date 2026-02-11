@@ -1,10 +1,13 @@
 ! Title: Custom Blocklist
 ! Description: Strict mode (No includes). Keywords: facebook, messenger, instagram, youtube, spotify, twitter
-! Count: 694
-! Updated: Tue Feb 10 01:18:27 UTC 2026
+! Count: 703
+! Updated: Wed Feb 11 01:16:06 UTC 2026
 
+|adeventtracker.spotify.com @ads^
+|adstudio-assets.scdn.co @ads^
 |audio-ak-spotify-com.akamaized.net^
 |audio4-ak-spotify-com.akamaized.net^
+|bloodhound.spotify.com @ads^
 |cdn-spotify-experiments.conductrics.com^
 |fbcdn-a.akamaihd.net^
 |heads-ak-spotify-com.akamaized.net^
@@ -22,7 +25,9 @@
 ||acheterdesfollowersinstagram.com^
 ||acheterfollowersinstagram.com^
 ||ads-twitter.com @ads^
+||ads.youtube.com @ads^
 ||advancediddetection.com^
+||analytics.facebook.com @ads^
 ||askfacebook.net^
 ||askfacebook.org^
 ||atdmt2.com^
@@ -135,6 +140,7 @@
 ||facebook30.net^
 ||facebook30.org^
 ||facebook4business.com^
+||facebookads.com @ads^
 ||facebookadvertisingsecrets.com^
 ||facebookatschool.com^
 ||facebookawards.com^
@@ -373,6 +379,8 @@
 ||ggpht.cn @cn^
 ||ggpht.com^
 ||googlevideo.com^
+||graph-fallback.instagram.com @ads^
+||graph.instagram.com @ads^
 ||groups.com^
 ||hackerfacebook.com^
 ||hackfacebook.com^
@@ -463,6 +471,7 @@
 ||onlineinstagram.com^
 ||opencreate.org^
 ||periscope.tv^
+||pixel.facebook.com @ads^
 ||pscdn.co^
 ||pscp.tv^
 ||reachtheworldonfacebook.com^
