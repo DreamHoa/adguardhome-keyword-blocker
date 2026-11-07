@@ -10,11 +10,12 @@ on:
       - main
     paths:
       - 'target_sites.txt'
+      - '.github/workflows/daily_build.yml'
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write  # 必须给写权限才能提交代码
     
